@@ -3,515 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Command | OPS CENTER</title>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
-
+    <title>Aircraft Work Order System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #0f172a;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            color: #e2e8f0;
+        :root {
+            --primary: #0a4d8c;
+            --accent: #ff6b35;
+            --success: #00a86b;
+            --warning: #ffa500;
+            --danger: #dc3545;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
             min-height: 100vh;
         }
-
-        /* Tech Grid Background */
-        .tech-grid {
-            background-size: 40px 40px;
-            background-image:
-                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: -1;
-            pointer-events: none;
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #063a6a 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* Animations */
-        @keyframes radar-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        .radar-pulse { animation: radar-pulse 2s infinite; }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-4px); }
-        }
-        .float { animation: float 6s ease-in-out infinite; }
-
-        /* Glass Cards */
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .glass-card {
-            background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .glass-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(148, 163, 184, 0.3);
-            box-shadow: 0 20px 40px -5px rgba(0,0,0,0.4);
-        }
-
-        .status-badge {
-            box-shadow: 0 0 15px -3px currentColor;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 2rem; }
+        .btn { padding: 0.6rem 1.4rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th { background: var(--primary); color: white; padding: 1rem; text-align: left; }
+        td { padding: 1rem; border-bottom: 1px solid #e1e8ed; }
+        tr:hover { background: #f0f4f8; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 16px; padding: 2rem; max-width: 700px; width: 90%; }
+        input, select, textarea { width: 100%; padding: 0.75rem; border: 2px solid #e1e8ed; border-radius: 6px; margin-top: 0.5rem; }
     </style>
 </head>
 <body>
-    <div class="tech-grid"></div>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-
-        // --- ENHANCED ICONS ---
-        const Icons = {
-            Plane: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>,
-            PlaneFill: () => <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V8l4-5h3l-2 5h3l1-2h2l-2.5 6 2.5 6h-2l-1-2h-3l2 5h-3l-4-5v-6a2 2 0 0 0-2-2H4a2 2 0 0 1-2 2z"/></svg>,
-            Turbine: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4m15.364 6.364l-12.728-12.728m12.728 0L6.364 19.364" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" /></svg>,
-            Wrench: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" /></svg>,
-            Check: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>,
-            Alert: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>,
-            Clock: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-            Calendar: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
-            Sync: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>,
-            Grid: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
-            List: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
-            Radar: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
-        };
-
-        function Dashboard() {
-            const [aircraft, setAircraft] = useState([]);
-            const [currentTime, setCurrentTime] = useState(new Date());
-            const [syncing, setSyncing] = useState(false);
-            const [nextSync, setNextSync] = useState(300);
-            const [loading, setLoading] = useState(true);
-            const [viewMode, setViewMode] = useState('table');
-            const [filterStatus, setFilterStatus] = useState('ALL');
-
-            const SHOW_HOURS_THRESHOLD = 15;
-            const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXiRXaJISr4tcW13tBxLXI7heUjDbCyGyyABHPZIrx-m2YqXWP0oyeTw1VL4slZ0dJrrngl3CsvO2z/pub?gid=0&single=true&output=csv';
-
-            async function syncFromGoogleSheet() {
-                setSyncing(true);
-                try {
-                    let response = await fetch(SHEET_URL);
-                    if (!response.ok) {
-                        const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                        response = await fetch(proxyUrl + encodeURIComponent(SHEET_URL));
-                    }
-                    const csvText = await response.text();
-                    const lines = csvText.trim().split('\n');
-                    const parsedData = lines.slice(1).map(line => {
-                        const cols = line.split(',').map(col => col.trim().replace(/"/g, ''));
-                        return {
-                            slNo: parseInt(cols[0]),
-                            registration: cols[1],
-                            type: cols[2],
-                            status: cols[3],
-                            dailyInsp: cols[4],
-                            weeklyInsp: cols[5],
-                            mel: cols[6] || '',
-                            remarks: cols[7] || ''
-                        };
-                    }).filter(row => row.registration && !isNaN(row.slNo));
-
-                    if (parsedData.length > 0) {
-                        setAircraft(parsedData);
-                        setNextSync(300);
-                    }
-                } catch (error) {
-                    console.error('Sync error:', error);
-                } finally {
-                    setSyncing(false);
-                    setLoading(false);
-                }
+    <div class="header">
+        <h1>✈ Aircraft Work Order Tracking</h1>
+    </div>
+    <div class="container">
+        <button class="btn btn-primary" onclick="loadFromSheet()">🔄 Refresh</button>
+        <table id="workOrderTable">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Aircraft</th>
+                    <th>W/O Number</th>
+                    <th>Description</th>
+                    <th>Due Date</th>
+                    <th>Completed By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <div id="completeModal" class="modal">
+        <div class="modal-content">
+            <h2>Complete Work Order</h2>
+            <form id="completeForm" onsubmit="completeWorkOrder(event)">
+                <input type="hidden" id="completeIndex">
+                <label>Your Name *</label>
+                <input type="text" id="technicianName" required>
+                <label>Logbook PDF *</label>
+                <input type="file" id="logbookFile" accept=".pdf" required>
+                <label>Notes (Optional)</label>
+                <textarea id="completionNotes"></textarea>
+                <br><br>
+                <button type="submit" class="btn btn-success">✓ Mark Complete</button>
+                <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSXiRXaJISr4tcW13tBxLXI7heUjDbCyGyyABHPZIrx-m2YqXWP0oyeTw1VL4slZ0dJrrngl3CsvO2z/pub?gid=1269716757&single=true&output=csv';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzsnA3hok8fKeljcjGbWmMwhppdgGDp0nOMyIjj1Gh9TdwFiaCQ2rUxp_TwuaqYQaDkw/exec';
+        let workOrders = [];
+        
+        async function loadFromSheet() {
+            const response = await fetch(SHEET_URL);
+            const csv = await response.text();
+            const lines = csv.split('\n');
+            workOrders = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.replace(/"/g, ''));
+                if (cols[0]) workOrders.push({
+                    aircraft: cols[0], woNumber: cols[1], description: cols[2],
+                    dueDate: cols[3], status: cols[6] || 'Pending',
+                    completedBy: cols[7] || '', logbookUrl: cols[9] || ''
+                });
             }
-
-            useEffect(() => {
-                syncFromGoogleSheet();
-                const timeTimer = setInterval(() => setCurrentTime(new Date()), 1000);
-                const countdownTimer = setInterval(() => {
-                    setNextSync(prev => {
-                        if (prev <= 1) {
-                            syncFromGoogleSheet();
-                            return 300;
-                        }
-                        return prev - 1;
-                    });
-                }, 1000);
-                return () => { clearInterval(timeTimer); clearInterval(countdownTimer); };
-            }, []);
-
-            function calculateTime(dateStr) {
-                if (!dateStr || dateStr.trim() === "") return { hours: 999, overdue: false };
-                try {
-                    const parts = dateStr.split(' ');
-                    const datePart = parts[0].split('/');
-                    const timePart = parts[1].split(':');
-                    const due = new Date(Date.UTC(datePart[2], datePart[1] - 1, datePart[0], timePart[0], timePart[1]));
-                    const diffMs = due - new Date();
-                    const hours_remaining = Math.floor(diffMs / 3600000);
-                    return { hours: hours_remaining, overdue: hours_remaining < 0 };
-                } catch (e) {
-                    return { hours: 999, overdue: false };
-                }
-            }
-
-            // Dark Mode Status Colors
-            function getStatusStyle(status) {
-                const s = status?.toUpperCase();
-                // Emerald/Teal for Good, Amber for Maintenance, Rose/Red for AOG/Error
-                if (s === 'SERVICEABLE') return { 
-                    bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', dot: 'bg-emerald-500', 
-                    glow: 'shadow-[0_0_15px_-3px_rgba(16,185,129,0.3)]' 
-                };
-                if (s === 'MRO') return { 
-                    bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', dot: 'bg-amber-500',
-                    glow: 'shadow-[0_0_15px_-3px_rgba(245,158,11,0.3)]'
-                };
-                if (s === 'AOG') return { 
-                    bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30', dot: 'bg-rose-500',
-                    glow: 'shadow-[0_0_15px_-3px_rgba(244,63,94,0.3)]'
-                };
-                return { 
-                    bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30', dot: 'bg-slate-500',
-                    glow: ''
-                };
-            }
-
-            function getAlertStatus(ac, isCritical) {
-                const remarksClean = ac.remarks ? ac.remarks.trim() : '';
-                const isServiceable = ac.status?.toUpperCase() === 'SERVICEABLE';
-                
-                if (isCritical) {
-                    return { 
-                        type: 'CRITICAL', 
-                        content: <span className="flex items-center gap-1.5 text-rose-400 font-bold animate-pulse text-sm">
-                            <Icons.Alert /> EXPIRED/DUE
-                        </span> 
-                    };
-                }
-                
-                if (isServiceable && (!remarksClean || remarksClean.toUpperCase() === 'NORMAL')) {
-                    return { 
-                        type: 'READY', 
-                        content: <span className="flex items-center gap-1.5 text-emerald-400 font-bold tracking-wide text-xs border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 rounded">
-                            <Icons.Check /> FLIGHT READY
-                        </span> 
-                    };
-                }
-
-                return { 
-                    type: 'INFO', 
-                    content: <span className="text-slate-400 font-medium text-xs truncate max-w-[150px] block" title={remarksClean}>{remarksClean || '-'}</span> 
-                };
-            }
-
-            if (loading) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center bg-slate-900">
-                        <div className="text-center relative">
-                            <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full"></div>
-                            <div className="text-white text-6xl mb-8 float relative z-10"><Icons.PlaneFill /></div>
-                            <div className="text-blue-400 font-mono text-sm uppercase tracking-[0.4em] animate-pulse">Establishing Datalink</div>
-                        </div>
-                    </div>
-                );
-            }
-
-            const filteredAircraft = filterStatus === 'ALL' ? aircraft : aircraft.filter(ac => ac.status?.toUpperCase() === filterStatus);
-
-            const AircraftCard = ({ ac, index }) => {
-                const dailyTime = calculateTime(ac.dailyInsp);
-                const weeklyTime = calculateTime(ac.weeklyInsp);
-                const showAlerts = ac.status?.toUpperCase() !== 'AOG' && ac.status?.toUpperCase() !== 'MRO';
-                const isCritical = showAlerts && (dailyTime.hours <= 3 || weeklyTime.hours <= 3);
-                const styles = getStatusStyle(ac.status);
-                const alertStatus = getAlertStatus(ac, isCritical);
-                
-                return (
-                    <div className="glass-card rounded-xl p-5 relative overflow-hidden group flex flex-col h-full">
-                        
-                        {/* Status Stripe */}
-                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${styles.dot}`}></div>
-
-                        <div className="flex justify-between items-start mb-5 pl-3">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest bg-slate-800/50 px-1.5 rounded border border-slate-700/50">
-                                        {ac.type}
-                                    </span>
-                                </div>
-                                <div className="text-3xl font-bold text-white tracking-tight font-mono group-hover:text-blue-200 transition-colors flex items-center gap-2">
-                                    {ac.registration}
-                                </div>
-                            </div>
-                            <div className={`px-3 py-1 rounded border ${styles.bg} ${styles.border} ${styles.text} ${styles.glow} flex items-center gap-2`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${styles.dot} ${ac.status === 'SERVICEABLE' ? 'radar-pulse' : ''}`}></div>
-                                <span className="text-[10px] font-bold uppercase tracking-widest">{ac.status}</span>
-                            </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 mb-5 pl-3">
-                            {/* Daily Check Block */}
-                            <div className="bg-slate-800/40 rounded-lg p-2.5 border border-slate-700/50 hover:border-slate-600 transition-colors">
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1">
-                                        <Icons.Calendar /> DAILY
-                                    </div>
-                                </div>
-                                <div className="text-sm font-mono font-bold text-slate-200">{ac.dailyInsp || '--:--'}</div>
-                                {dailyTime.hours <= SHOW_HOURS_THRESHOLD && !dailyTime.overdue && dailyTime.hours !== 999 && (
-                                    <div className="text-[10px] font-bold text-amber-500 mt-1 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded w-fit">
-                                        <Icons.Clock /> {dailyTime.hours}H REMAINING
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Weekly Check Block */}
-                            <div className="bg-slate-800/40 rounded-lg p-2.5 border border-slate-700/50 hover:border-slate-600 transition-colors">
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase flex items-center gap-1">
-                                        <Icons.Wrench /> WEEKLY
-                                    </div>
-                                </div>
-                                <div className="text-sm font-mono font-bold text-slate-200">{ac.weeklyInsp || '--:--'}</div>
-                                {weeklyTime.hours <= SHOW_HOURS_THRESHOLD && !weeklyTime.overdue && weeklyTime.hours !== 999 && (
-                                    <div className="text-[10px] font-bold text-amber-500 mt-1 flex items-center gap-1 bg-amber-500/10 px-1.5 py-0.5 rounded w-fit">
-                                        <Icons.Clock /> {weeklyTime.hours}H REMAINING
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mt-auto pl-3 pt-4 border-t border-slate-700/50">
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1">
-                                        <Icons.Turbine /> MEL / Tech Log
-                                    </div>
-                                    {ac.mel && ac.mel.trim() ? (
-                                        <span className="text-rose-400 font-mono font-bold text-xs bg-rose-500/10 px-2 py-1 rounded border border-rose-500/30 inline-block">{ac.mel}</span>
-                                    ) : (
-                                        <span className="text-slate-600 text-xs font-mono">NO OPEN ITEMS</span>
-                                    )}
-                                </div>
-                                <div className="text-right">
-                                    {alertStatus.content}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            return (
-                <div className="p-4 lg:p-8 font-sans flex flex-col pb-20 max-w-[1600px] mx-auto w-full">
-                        
-                    {/* HEADER */}
-                    <div className="glass-panel rounded-2xl p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden">
-                        {/* Decorative background glow */}
-                        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-                        
-                        <div className="flex items-center gap-6 z-10 w-full md:w-auto">
-                            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-900/50 border border-blue-400/30">
-                                <Icons.PlaneFill />
-                            </div>
-                            <div>
-                                <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                                    FLEET COMMAND
-                                    <span className="text-[10px] font-mono border border-blue-500/50 text-blue-400 px-1.5 py-0.5 rounded bg-blue-900/30">v2.1</span>
-                                </h1>
-                                <p className="text-slate-400 font-medium text-xs uppercase tracking-widest flex items-center gap-2 mt-1">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]"></span>
-                                    Live Operations Network
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Top Stats/Time */}
-                        <div className="flex items-center gap-8 z-10 w-full md:w-auto justify-between md:justify-end">
-                            <div className="hidden lg:block text-right border-r border-slate-700 pr-8">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Fleet Status</div>
-                                <div className="text-white font-bold flex gap-3">
-                                    <span className="text-emerald-400">{aircraft.filter(a => a.status === 'SERVICEABLE').length} Ready</span>
-                                    <span className="text-rose-400">{aircraft.filter(a => a.status === 'AOG').length} AOG</span>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5 flex items-center justify-end gap-1">
-                                    <Icons.Radar /> ZULU TIME
-                                </div>
-                                <div className="font-mono text-2xl font-bold text-blue-100 tabular-nums tracking-widest text-shadow-glow">
-                                    {currentTime.getUTCHours().toString().padStart(2, '0')}:
-                                    {currentTime.getUTCMinutes().toString().padStart(2, '0')}:
-                                    {currentTime.getUTCSeconds().toString().padStart(2, '0')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CONTROLS BAR */}
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                        
-                        {/* Filter Tabs */}
-                        <div className="glass-panel p-1 rounded-lg flex gap-1 overflow-x-auto max-w-full w-full md:w-auto">
-                            {['ALL', 'SERVICEABLE', 'MRO', 'AOG'].map(status => (
-                                <button 
-                                    key={status}
-                                    onClick={() => setFilterStatus(status)} 
-                                    className={`px-5 py-2 rounded-md text-xs font-bold transition-all whitespace-nowrap uppercase tracking-wider flex-1 md:flex-none ${
-                                        filterStatus === status 
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                                    }`}
-                                >
-                                    {status === 'ALL' ? 'Total Fleet' : status}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* View Toggle & Sync */}
-                        <div className="flex gap-3 w-full md:w-auto justify-end">
-                            <div className="glass-panel p-1 rounded-lg flex">
-                                <button onClick={() => setViewMode('table')} className={`p-2 rounded transition-all ${viewMode === 'table' ? 'bg-slate-700 text-blue-400 shadow' : 'text-slate-500 hover:text-slate-300'}`}>
-                                    <Icons.List />
-                                </button>
-                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded transition-all ${viewMode === 'grid' ? 'bg-slate-700 text-blue-400 shadow' : 'text-slate-500 hover:text-slate-300'}`}>
-                                    <Icons.Grid />
-                                </button>
-                            </div>
-                            <button
-                                onClick={syncFromGoogleSheet}
-                                disabled={syncing}
-                                className="glass-panel px-4 py-2 rounded-lg text-xs font-bold text-blue-300 flex items-center gap-2 hover:bg-slate-800 transition-all border border-blue-500/20 hover:border-blue-400/50 active:scale-95 uppercase tracking-wide"
-                            >
-                                <span className={syncing ? 'animate-spin' : ''}><Icons.Sync /></span>
-                                {syncing ? 'UPLINKING...' : `REFRESH (${Math.floor(nextSync / 60)}:${String(nextSync % 60).padStart(2, '0')})`}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* GRID VIEW */}
-                    {viewMode === 'grid' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredAircraft.map((ac, i) => (
-                                <AircraftCard key={i} ac={ac} index={i} />
-                            ))}
-                        </div>
-                    )}
-
-                    {/* TABLE VIEW */}
-                    {viewMode === 'table' && (
-                        <div className="glass-panel rounded-xl shadow-xl overflow-hidden border border-slate-700/50">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-800/80 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-700">
-                                            <th className="px-6 py-4 w-16">#</th>
-                                            <th className="px-6 py-4">Registration</th>
-                                            <th className="px-6 py-4 text-center">Status</th>
-                                            <th className="px-6 py-4">Daily Check</th>
-                                            <th className="px-6 py-4">Weekly Check</th>
-                                            <th className="px-6 py-4">MEL / Tech Log</th>
-                                            <th className="px-6 py-4 text-right">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-700/50 bg-slate-900/30">
-                                        {filteredAircraft.map((ac, i) => {
-                                            const dailyTime = calculateTime(ac.dailyInsp);
-                                            const weeklyTime = calculateTime(ac.weeklyInsp);
-                                            const showAlerts = ac.status?.toUpperCase() !== 'AOG' && ac.status?.toUpperCase() !== 'MRO';
-                                            const isCritical = showAlerts && (dailyTime.hours <= 3 || weeklyTime.hours <= 3);
-                                            const styles = getStatusStyle(ac.status);
-                                            const alertStatus = getAlertStatus(ac, isCritical);
-
-                                            return (
-                                                <tr key={i} className="hover:bg-white/5 transition-colors group">
-                                                    <td className="px-6 py-4 text-sm font-mono text-slate-600">{ac.slNo}</td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-lg font-bold text-white font-mono tracking-tight">{ac.registration}</div>
-                                                        <div className="text-[10px] text-slate-500 font-bold uppercase">{ac.type}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${styles.bg} ${styles.text} border ${styles.border} ${styles.glow}`}>
-                                                            <span className={`w-1.5 h-1.5 rounded-full ${styles.dot}`}></span>
-                                                            {ac.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-mono font-medium text-slate-300">{ac.dailyInsp}</div>
-                                                        {dailyTime.hours <= SHOW_HOURS_THRESHOLD && !dailyTime.overdue && dailyTime.hours !== 999 && (
-                                                            <div className="text-[10px] font-bold text-amber-500 mt-0.5 flex items-center gap-1">
-                                                                <Icons.Clock /> {dailyTime.hours}h
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-sm font-mono font-medium text-slate-300">{ac.weeklyInsp}</div>
-                                                        {weeklyTime.hours <= SHOW_HOURS_THRESHOLD && !weeklyTime.overdue && weeklyTime.hours !== 999 && (
-                                                            <div className="text-[10px] font-bold text-amber-500 mt-0.5 flex items-center gap-1">
-                                                                <Icons.Clock /> {weeklyTime.hours}h
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {ac.status === 'MRO' ? (
-                                                            <span className="text-amber-500/50 text-xs font-bold italic flex items-center gap-1"><Icons.Wrench /> In Maintenance</span>
-                                                        ) : ac.mel && ac.mel.trim() ? (
-                                                            <span className="text-rose-400 font-mono font-bold text-xs bg-rose-500/10 px-2 py-1 rounded border border-rose-500/30">{ac.mel}</span>
-                                                        ) : (
-                                                            <span className="text-slate-600 font-bold text-[10px] uppercase">Nil Defects</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        {alertStatus.content}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="px-6 py-3 bg-slate-800/50 border-t border-slate-700 flex justify-between items-center">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase">Monitoring {filteredAircraft.length} Aircraft</div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
+            renderTable();
         }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<Dashboard />);
+        
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = workOrders.map((wo, i) => `
+                <tr>
+                    <td>${wo.status}</td>
+                    <td><strong>${wo.aircraft}</strong></td>
+                    <td>${wo.woNumber}</td>
+                    <td>${wo.description}</td>
+                    <td>${wo.dueDate}</td>
+                    <td>${wo.completedBy || '-'}</td>
+                    <td>
+                        ${wo.status !== 'Completed' ? 
+                            `<button class="btn btn-success" onclick="openModal(${i})">Complete</button>` :
+                            wo.logbookUrl ? `<a href="${wo.logbookUrl}" target="_blank">View PDF</a>` : '-'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openModal(i) {
+            document.getElementById('completeIndex').value = i;
+            document.getElementById('completeModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('completeModal').classList.remove('active');
+        }
+        
+        async function completeWorkOrder(e) {
+            e.preventDefault();
+            const i = document.getElementById('completeIndex').value;
+            const name = document.getElementById('technicianName').value;
+            const file = document.getElementById('logbookFile').files[0];
+            const notes = document.getElementById('completionNotes').value;
+            
+            // Convert PDF to base64
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = {
+                    aircraft: workOrders[i].aircraft,
+                    woNumber: workOrders[i].woNumber,
+                    status: 'Completed',
+                    completedBy: name,
+                    completedDate: new Date().toISOString().split('T')[0],
+                    logbookUrl: e.target.result,
+                    completionNotes: notes
+                };
+                
+                // Send to Google Apps Script
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                closeModal();
+                loadFromSheet();
+                alert('Work order completed!');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        loadFromSheet();
     </script>
 </body>
 </html>
